@@ -1,0 +1,88 @@
+// Device tree overlay for I2C connected EETI exc7200 multiple touch controller
+/dts-v1/;
+/plugin/;
+
+/*
+ * compile with:
+ *   dtc -@ -Hepapr -I dts -O dtb -o exc7200.dtbo exc7200.dts
+ *
+ * There wmay be some warnings (can be ignored):
+ *  Warning (label_is_string): /__overrides__:label: property is not a string
+ *  Warning (unit_address_vs_reg): /fragment@0/__overlay__/led_pins@0:
+ *                                 node has a unit name, but no reg property
+ *  Warning (unit_address_vs_reg): /fragment@1/__overlay__/leds@0:
+ *                                 node has a unit name, but no reg property
+ *  Warning (gpios_property): /__overrides__: Missing property
+ *                 '#gpio-cells' in node /fragment@1/__overlay__/leds@0/led
+ *                  or bad phandle (referred from gpio[0])
+ *
+ * Typical electrical connection is:
+ *    RPI-GPIO.004  (pin 7) -> Touscreen interrupt
+ *    The GPIO pin number can be changed with the 'gpio=' parameter.
+ *
+ * Test from user-space with:
+ *   # if nothing is shown, the overlay file isn't found in /boot/overlays
+ *   dtoverlay -a | grep exc7200
+ *
+ *   # Load the overlay
+ *   dtoverlay exc7200 interrupt=4 sizex=4096 sizey=4096 invx=0 invy=0 swapxy=0
+ *
+ *   # if nothing is shown, the overlay wasn't loaded successfully
+ *   dtoverlay -l | grep exc7200
+ *
+ *   # unload the overlay
+ *   dtoverlay -r exc7200
+ *
+ * To load at boot time copy the dtbo file to /boot/overlays
+ *  cp exc7200.dtbo /boot/overlays/
+ *
+ * In /boot/config.txt add lines such as:
+ *   dtoverlay=exc7200,interrupt=4,sizex=4096,sizey=4096,invx=0,invy=0,swapxy=0
+ *
+ */
+
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&gpio>;
+		__overlay__ {
+			exc7200_pins: exc7200_pins {
+				brcm,pins = <4>; // interrupt
+				brcm,function = <0>; // in
+				brcm,pull = <2>; // pull-up
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&i2c1>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+
+			exc7200: exc7200@2a {
+				compatible = "eeti,exc7200";
+				reg = <0x04>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&exc7200_pins>;
+				interrupt-parent = <&gpio>;
+				interrupts = <4 8>; // active low level-sensitive
+				touchscreen-size-x = <0>;
+				touchscreen-size-y = <0>;
+			};
+		};
+	};
+
+	__overrides__ {
+		interrupt = <&exc7200_pins>,"brcm,pins:0",
+			<&exc7200>,"interrupts:0";
+		sizex = <&exc7200>,"touchscreen-size-x:0";
+		sizey = <&exc7200>,"touchscreen-size-y:0";
+		invx = <&exc7200>,"touchscreen-inverted-x?";
+		invy = <&exc7200>,"touchscreen-inverted-y?";
+		swapxy = <&exc7200>,"touchscreen-swapped-x-y?";
+	};
+};
