@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Driver for I2C connected EETI EXC7200 multiple touch controller
+ * Copyright (C) 2025 Ben Phillips <audiossis@gmail.com
  *
- * Copyright (C) 2017 Ahmet Inan <inan@distec.de>
+ * Based on the in kernel driver for EXC3000 by Ahmet Inan <inan@distec.de>
  *
- * minimal implementation based on egalax_ts.c and egalax_i2c.c
  */
 
 #include <linux/kernel.h>
@@ -264,6 +264,6 @@ static struct i2c_driver exc7200_driver = {
 
 module_i2c_driver(exc7200_driver);
 
-MODULE_AUTHOR("Ahmet Inan <inan@distec.de>");
+MODULE_AUTHOR("Ben Phillips <audiossis@gmail.com>");
 MODULE_DESCRIPTION("I2C connected EETI EXC7200 multiple touch controller driver");
 MODULE_LICENSE("GPL v2");
